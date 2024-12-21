@@ -1,0 +1,970 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <!-- Define la codificacion de caracteres para mostrar simbolos correctamente -->
+  <meta charset="UTF-8">
+
+  <!-- Ajusta la vista en dispositivos moviles con anchura y altura concretas, sin zoom (Para el tema de los moviles)-->
+  <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
+
+  <!-- Titulo de la pagina que aparece en la pestaña del navegador -->
+  <title>¡Despega tus Hábitos!</title>
+
+  <!-- Script para integracion con Telegram WebApp -->
+  <script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+  <style>
+    /* 
+      Estilos globales:
+      - Se quitan margenes y rellenos por defecto
+      - Se fija la caja de dimension segun border-box
+    */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    /* 
+      Html y body ocupan la altura completa, con color de fondo claro
+      y tipografia base en sans-serif.
+    */
+    html, body {
+      height: 100%;
+      min-height: 100vh;
+      background-color: #f9f9f9;
+      font-family: sans-serif;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    /* 
+      Body en modo flex para ajustar su contenido principal y pie
+      (si existiera) en columnas
+    */
+    body {
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* 
+      main crece para ocupar el espacio sobrante 
+      y se añade un padding-bottom grande para que 
+      el contenido se pueda desplazar sin problemas
+      en los moviles (antes no se podia enviar)
+    */
+    main {
+      flex: 1;
+      padding: 16px;
+      overflow-y: auto;
+      padding-bottom: 600px;
+    }
+
+    /* 
+      Titulos principales: color, tamano de fuente y sombra
+    */
+    h1 {
+      text-align: center;
+      font-size: 1.8rem;
+      margin-bottom: 0.5rem;
+      color: #f06292;
+      text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
+    }
+    .subtitle-cohete {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    /* 
+      input-group es una seccion con una etiqueta y un input 
+      para datos como nombre o edad
+    */
+    .input-group {
+      margin-bottom: 15px;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 600;
+    }
+    .input-group input {
+      width: 100%;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+
+    /* 
+      Seccion donde se muestran los habitos seleccionados
+      con fondo blanco y borde suave
+    */
+    #habitosSeleccionadosContainer {
+      background-color: #fff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+    }
+    #habitosSeleccionadosContainer h2 {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    #selectedHabitsList {
+      font-size: 0.9rem;
+      color: #666;
+      min-height: 20px;
+    }
+
+    /* 
+      Acordeon con bordes rosas y fondo blanco.
+      - .accordion-header: encabezado clicable para mostrar/ocultar contenido
+      - .accordion-content: despliega su interior con transicion
+    */
+    .accordion {
+      border: 2px solid #f06292;
+      border-radius: 8px;
+      margin-bottom: 10px;
+      overflow: hidden;
+      background-color: #fff;
+    }
+    .accordion-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 15px;
+      background-color: #fafafa;
+      cursor: pointer;
+    }
+    .accordion-header h3 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #f06292;
+    }
+    .accordion-content {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .accordion-content.open {
+      padding: 15px;
+      border-top: 1px solid #eee;
+    }
+
+    /* 
+      Contenedor de habitos en formato grid, se reparten segun espacio:
+      cada habit-item es un recuadro con borde y un posible hover
+    */
+    .habit-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+      gap: 10px;
+    }
+    .habit-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+      background-color: #fff;
+    }
+    .habit-item:hover {
+      background-color: #fdfdfd;
+    }
+    .habit-item.selected {
+      border-color: #ff9090;
+      background-color: #ffecee;
+    }
+    .habit-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      pointer-events: none;
+    }
+    .habit-icon {
+      font-size: 1.4rem;
+    }
+    .plus-btn {
+      background-color: transparent;
+      border: none;
+      font-size: 1.2rem;
+      color: #f06292;
+      cursor: pointer;
+    }
+
+    /* 
+      Para anadir un habito personalizado con un emoji:
+      Se muestra un pequeno bloque con dos inputs y un boton
+    */
+    .custom-habit-wrapper {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      align-items: center;
+      padding: 10px;
+      margin-top: 10px;
+      border-top: 1px dashed #ddd;
+      grid-column: 1 / -1;
+    }
+    .custom-emoji-input {
+      width: 60px;
+      text-align: center;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      font-size: 1rem;
+      padding: 8px;
+    }
+    .custom-habit-input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      font-size: 1rem;
+    }
+    .custom-habit-btn {
+      background-color: #f06292;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.6rem 1rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .custom-habit-btn:hover {
+      background-color: #ec407a;
+    }
+
+    /* 
+      Seccion de Objetivos donde se podran especificar 
+      detalles para cada habito
+    */
+    #objetivosContainer {
+      background-color: #fff;
+      border: 1px solid #eee;
+      border-radius: 8px;
+      padding: 15px;
+      margin-top: 20px;
+      margin-bottom: 20px;
+    }
+    #objetivosContainer h2 {
+      margin-bottom: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: #333;
+    }
+    #objetivosList {
+      font-size: 0.9rem;
+      color: #333;
+    }
+    .objetivo-row {
+      margin-bottom: 15px;
+    }
+    .objetivo-row label {
+      font-weight: 600;
+      min-width: 120px;
+      display: inline-block;
+      margin-bottom: 5px;
+    }
+    .objetivo-plus-btn {
+      background-color: #f06292;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+      margin-left: 10px;
+    }
+    .objetivo-plus-btn:hover {
+      background-color: #ec407a;
+    }
+    .objetivo-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-top: 5px;
+      flex-wrap: wrap;
+    }
+    .objetivo-input {
+      flex: 1;
+      min-width: 0;
+      padding: 8px;
+      border: 1px solid #eee;
+      border-radius: 6px;
+      font-size: 0.9rem;
+    }
+    .remove-objetivo-btn {
+      background-color: #bbb;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      font-size: 0.8rem;
+    }
+    .remove-objetivo-btn:hover {
+      background-color: #999;
+    }
+    .frequency-row {
+      margin-left: 30px;
+      margin-top: 5px;
+    }
+    .frequency-select {
+      padding: 5px 8px;
+      font-size: 0.9rem;
+      border-radius: 6px;
+      border: 1px solid #eee;
+    }
+
+    /* 
+      Boton de envio:
+      - Desactivado por defecto (gris y sin cursor)
+      - Al estar habilitado se vuelve rosa
+    */
+    .send-button {
+      background-color: #ccc; /* gris por defecto */
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 0.8rem 1.5rem;
+      cursor: not-allowed;
+      font-size: 1rem;
+      display: block;
+      margin: 0 auto 40px auto;
+      transition: background-color 0.2s;
+    }
+    .send-button.enabled {
+      background-color: #f06292;
+      cursor: pointer;
+    }
+    .send-button.enabled:hover {
+      background-color: #ec407a;
+    }
+
+    /* 
+      Mensajes de error con color rojo y tamano de letra mas pequeno
+    */
+    #errorMessages {
+      font-size: 0.7rem;
+      color: #d00;
+      line-height: 1.2;
+      margin-top: 10px;
+      text-align: center;
+    }
+
+    /* 
+      Breakpoints para ajustar el tamano del texto y la disposicion 
+      en pantallas mas anchas
+    */
+    @media (min-width: 600px) {
+      h1 {
+        font-size: 2rem;
+      }
+      .subtitle-cohete {
+        font-size: 2.5rem;
+      }
+    }
+    @media (min-width: 768px) {
+      .habit-list {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    @media (min-width: 992px) {
+      .habit-list {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <main>
+    <!-- Titulo principal con un icono de cohete -->
+    <h1>¡Despega tus Hábitos!</h1>
+    <div class="subtitle-cohete">🚀</div>
+
+    <!-- Campo para introducir el nombre -->
+    <div class="input-group">
+      <label for="nombre">Nombre *</label>
+      <input type="text" id="nombre" placeholder="¿Como te llaman tus amigos?">
+    </div>
+    <!-- Campo para introducir la edad -->
+    <div class="input-group">
+      <label for="edad">Edad *</label>
+      <input type="number" id="edad" placeholder="Para un seguimiento personalizado">
+    </div>
+
+    <!-- Campo para seleccionar el sexo -->
+    <div class="input-group">
+      <label for="sexo">Sexo *</label>
+      <select id="sexo" class="frequency-select">
+        <option value="no_especificado" selected>Prefiero no decirlo</option>
+        <option value="masculino">Masculino</option>
+        <option value="femenino">Femenino</option>
+      </select>
+    </div>
+
+    <!-- Contenedor con el listado de habitos seleccionados -->
+    <h2>Hábitos registrados *</h2>
+    <div id="habitosSeleccionadosContainer">
+      <div id="selectedHabitsList">(¡Seleccione algún Hábito!)</div>
+    </div>
+
+    <!-- Acordeon 1: categoria Alimentacion -->
+    <div class="accordion" data-category="Alimentacion">
+      <div class="accordion-header">
+        <h3>Alimentacion</h3>
+        <span>+</span>
+      </div>
+      <div class="accordion-content">
+        <div class="habit-list">
+          <!-- Item Beber agua -->
+          <div class="habit-item" data-habit="Beber agua">
+            <div class="habit-label">
+              <span class="habit-icon">💧</span>
+              <span>Beber agua</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <!-- Item Comer frutas -->
+          <div class="habit-item" data-habit="Comer fruta">
+            <div class="habit-label">
+              <span class="habit-icon">🍓</span>
+              <span>Comer fruta</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <!-- Item Comer verduras -->
+          <div class="habit-item" data-habit="Comer verdura">
+            <div class="habit-label">
+              <span class="habit-icon">🥦</span>
+              <span>Comer verdura</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <!-- Bloque para anadir un habito personalizado con emoji -->
+          <div class="custom-habit-wrapper">
+            <input type="text" class="custom-emoji-input" placeholder="Icono">
+            <input type="text" class="custom-habit-input" placeholder="¡Añade al hábito que quieras!">
+            <button class="custom-habit-btn">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acordeon 2: categoria Deporte -->
+    <div class="accordion" data-category="deporte">
+      <div class="accordion-header">
+        <h3>Deporte</h3>
+        <span>+</span>
+      </div>
+      <div class="accordion-content">
+        <div class="habit-list">
+          <div class="habit-item" data-habit="Caminar">
+            <div class="habit-label">
+              <span class="habit-icon">🚶‍♂️</span>
+              <span>Caminar</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Correr">
+            <div class="habit-label">
+              <span class="habit-icon">🏃‍♂️</span>
+              <span>Correr</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Yoga">
+            <div class="habit-label">
+              <span class="habit-icon">🧘‍♀️</span>
+              <span>Yoga</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="custom-habit-wrapper">
+            <input type="text" class="custom-emoji-input" placeholder="Icono">
+            <input type="text" class="custom-habit-input" placeholder="¡Añade al hábito que quieras!">
+            <button class="custom-habit-btn">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acordeon 3: categoria Estilo de Vida -->
+    <div class="accordion" data-category="estilo-vida">
+      <div class="accordion-header">
+        <h3>Estilo de Vida</h3>
+        <span>+</span>
+      </div>
+      <div class="accordion-content">
+        <div class="habit-list">
+          <div class="habit-item" data-habit="Respiración consciente">
+            <div class="habit-label">
+              <span class="habit-icon">😮‍💨</span>
+              <span>Respiración consciente</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Meditación">
+            <div class="habit-label">
+              <span class="habit-icon">🧘</span>
+              <span>Meditación</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Leer un libro">
+            <div class="habit-label">
+              <span class="habit-icon">📚</span>
+              <span>Leer un libro</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="custom-habit-wrapper">
+            <input type="text" class="custom-emoji-input" placeholder="Icono">
+            <input type="text" class="custom-habit-input" placeholder="¡Añade al hábito que quieras!">
+            <button class="custom-habit-btn">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acordeon 4: categoria tiempo -->
+    <div class="accordion" data-category="tiempo">
+      <div class="accordion-header">
+        <h3>Tiempo</h3>
+        <span>+</span>
+      </div>
+      <div class="accordion-content">
+        <div class="habit-list">
+          <div class="habit-item" data-habit="Hacer Diario">
+            <div class="habit-label">
+              <span class="habit-icon">📝</span>
+              <span>Hacer Diario</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Limpiar la mente">
+            <div class="habit-label">
+              <span class="habit-icon">💡</span>
+              <span>Limpiar la mente</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Planificar el día">
+            <div class="habit-label">
+              <span class="habit-icon">🗓️</span>
+              <span>Planificar el día</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="custom-habit-wrapper">
+            <input type="text" class="custom-emoji-input" placeholder="Icono">
+            <input type="text" class="custom-habit-input" placeholder="¡Añade al hábito que quieras!">
+            <button class="custom-habit-btn">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Acordeon 5: habitos a dejar -->
+    <div class="accordion" data-category="dejar">
+      <div class="accordion-header">
+        <h3>Hábitos que reducir</h3>
+        <span>+</span>
+      </div>
+      <div class="accordion-content">
+        <div class="habit-list">
+          <div class="habit-item" data-habit="Fumar">
+            <div class="habit-label">
+              <span class="habit-icon">🚭</span>
+              <span>Fumar</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Comida basura">
+            <div class="habit-label">
+              <span class="habit-icon">🍔</span>
+              <span>Comida basura</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="habit-item" data-habit="Bebidas azucaradas">
+            <div class="habit-label">
+              <span class="habit-icon">🧃</span>
+              <span>Bebidas azucaradas</span>
+            </div>
+            <button class="plus-btn">+</button>
+          </div>
+          <div class="custom-habit-wrapper">
+            <input type="text" class="custom-emoji-input" placeholder="Icono">
+            <input type="text" class="custom-habit-input" placeholder="¡Añade al hábito que quieras!">
+            <button class="custom-habit-btn">Añadir</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Seccion donde se muestran los objetivos de los habitos -->
+    <div id="objetivosContainer">
+      <h2>Objetivos</h2>
+      <div id="objetivosList"></div>
+    </div>
+
+    <!-- Boton Enviar para mandar los datos -->
+    <button class="send-button" id="btnEnviar">Enviar</button>
+
+    <!-- Zona donde se mostraran los mensajes de error si no se cumple algo -->
+    <div id="errorMessages"></div>
+  </main>
+
+  <script>
+    // Seleccion de todos los acordeones para anadirles funcionalidad
+    document.querySelectorAll('.accordion').forEach(accordion => {
+      const header = accordion.querySelector('.accordion-header');
+      const content = accordion.querySelector('.accordion-content');
+
+      // Asigna la categoria a cada item de habito
+      accordion.querySelectorAll('.habit-item').forEach(item => {
+        item.dataset.category = accordion.dataset.category || 'otro';
+      });
+
+      // Al hacer click en el encabezado, cierra todos y abre solo el clicado
+      header.addEventListener('click', () => {
+        const isOpen = content.classList.contains('open');
+        // Cerrar todos los contenidos
+        document.querySelectorAll('.accordion-content').forEach(ac => {
+          ac.classList.remove('open');
+          ac.style.maxHeight = null;
+        });
+        // Si no estaba abierto, se abre
+        if (!isOpen) {
+          content.classList.add('open');
+          content.style.maxHeight = content.scrollHeight + 'px';
+        }
+      });
+    });
+
+    // Constante para el maximo numero de habitos seleccionables
+    const MAX_HABITS = 5;
+    let selectedCount = 0;
+
+    // Almacenes para los objetivos y toggles
+    const objectivesMap = {}; // habitName -> { text, freq }
+    const togglesMap = {};    // habitName -> bool
+
+    // Elementos del DOM
+    const selectedHabitsList = document.getElementById('selectedHabitsList');
+    const objetivosContainer = document.getElementById('objetivosContainer');
+    const objetivosList = document.getElementById('objetivosList');
+    const btnEnviar = document.getElementById('btnEnviar');
+    const errorMessages = document.getElementById('errorMessages');
+
+    // Actualiza el texto de habitos seleccionados
+    function updateSelectedHabitsDisplay() {
+      const selectedItems = document.querySelectorAll('.habit-item.selected');
+      if (selectedItems.length === 0) {
+        selectedHabitsList.textContent = '(¡Seleccione algún Hábito!)';
+      } else {
+        const arr = [];
+        selectedItems.forEach(item => {
+          arr.push(item.dataset.habit);
+        });
+        selectedHabitsList.textContent = arr.join(', ');
+      }
+    }
+
+    // Muestra los objetivos para los habitos seleccionados
+    function updateObjectivesDisplay() {
+      const selectedItems = document.querySelectorAll('.habit-item.selected');
+      objetivosList.innerHTML = '';
+
+      // Si no hay habitos, se oculta la seccion de objetivos
+      if (selectedItems.length === 0) {
+        objetivosContainer.style.display = 'none';
+        return;
+      } else {
+        objetivosContainer.style.display = 'block';
+      }
+
+      // Para cada habito seleccionado, se genera un bloque que permite
+      // activar la parte del objetivo y especificar texto/frecuencia
+      selectedItems.forEach(item => {
+        const habitName = item.dataset.habit;
+        const category = item.dataset.category || 'otro';
+        if (!objectivesMap[habitName]) {
+          objectivesMap[habitName] = { text: '', freq: 'semanal' };
+        }
+        if (togglesMap[habitName] === undefined) {
+          togglesMap[habitName] = false;
+        }
+
+        const row = document.createElement('div');
+        row.className = 'objetivo-row';
+
+        const label = document.createElement('label');
+        label.textContent = habitName + ':';
+        row.appendChild(label);
+
+        if (!togglesMap[habitName]) {
+          const plusBtn = document.createElement('button');
+          plusBtn.className = 'objetivo-plus-btn';
+          plusBtn.textContent = '+';
+          plusBtn.addEventListener('click', () => {
+            togglesMap[habitName] = true;
+            updateObjectivesDisplay();
+            validateInputs();
+          });
+          row.appendChild(plusBtn);
+        } else {
+          const contentDiv = document.createElement('div');
+          contentDiv.className = 'objetivo-content';
+
+          const inputObj = document.createElement('input');
+          inputObj.type = 'text';
+          inputObj.className = 'objetivo-input';
+          inputObj.value = objectivesMap[habitName].text;
+          inputObj.addEventListener('input', () => {
+            objectivesMap[habitName].text = inputObj.value;
+            validateInputs();
+          });
+          contentDiv.appendChild(inputObj);
+
+          const removeBtn = document.createElement('button');
+          removeBtn.className = 'remove-objetivo-btn';
+          removeBtn.textContent = 'Quitar';
+          removeBtn.addEventListener('click', () => {
+            togglesMap[habitName] = false;
+            objectivesMap[habitName] = { text: '', freq: 'semanal' };
+            updateObjectivesDisplay();
+            validateInputs();
+          });
+          contentDiv.appendChild(removeBtn);
+
+          row.appendChild(contentDiv);
+
+          const freqDiv = document.createElement('div');
+          freqDiv.className = 'frequency-row';
+          const freqSelect = document.createElement('select');
+          freqSelect.className = 'frequency-select';
+          freqSelect.innerHTML = `
+            <option value="diaria">Diaria</option>
+            <option value="semanal">Semanal</option>
+            <option value="mensual">Mensual</option>
+          `;
+          freqSelect.value = objectivesMap[habitName].freq;
+          freqSelect.addEventListener('change', () => {
+            objectivesMap[habitName].freq = freqSelect.value;
+          });
+          freqDiv.appendChild(freqSelect);
+
+          row.appendChild(freqDiv);
+        }
+        objetivosList.appendChild(row);
+      });
+      // Valida al terminar de actualizar
+      validateInputs();
+    }
+
+    // Refresca la UI en general
+    function refreshUI() {
+      updateSelectedHabitsDisplay();
+      updateObjectivesDisplay();
+      validateInputs();
+    }
+
+    // Comprueba si los campos obligatorios estan rellenos y si los objetivos son validos
+    function validateInputs() {
+      const errors = [];
+      const nombre = document.getElementById('nombre').value.trim();
+      const edad = document.getElementById('edad').value.trim();
+      const selectedItems = document.querySelectorAll('.habit-item.selected');
+
+      // Validacion basica de nombre, edad y al menos un habito
+      if (!nombre) {
+        errors.push('- Falta el nombre');
+      }
+      if (!edad) {
+        errors.push('- Falta la edad');
+      }
+      if (selectedItems.length === 0) {
+        errors.push('- Falta al menos un hábito');
+      }
+
+      // Para cada habito que tenga objetivo activo, comprueba que no este vacio el texto
+      selectedItems.forEach(item => {
+        const habitName = item.dataset.habit;
+        if (togglesMap[habitName]) {
+          const objText = objectivesMap[habitName].text.trim();
+          if (!objText) {
+            errors.push(`- Quite el objetivo o ponga algo (para "${habitName}")`);
+          }
+        }
+      });
+
+      // Si no hay errores, habilita el boton "Enviar"
+      if (errors.length === 0) {
+        btnEnviar.classList.add('enabled');
+        btnEnviar.removeAttribute('disabled');
+        btnEnviar.style.backgroundColor = '#f06292';
+        btnEnviar.style.cursor = 'pointer';
+      } else {
+        // Si hay errores, desactiva el boton y muestra los mensajes
+        btnEnviar.classList.remove('enabled');
+        btnEnviar.setAttribute('disabled', true);
+        btnEnviar.style.backgroundColor = '#ccc';
+        btnEnviar.style.cursor = 'not-allowed';
+      }
+
+      errorMessages.innerHTML = errors.length > 0 ? errors.join('<br>') : '';
+    }
+
+    // Evento para seleccionar/deseleccionar un habito
+    document.querySelectorAll('.habit-item').forEach(item => {
+      item.addEventListener('click', (e) => {
+        e.stopPropagation();
+        // Si no esta seleccionado y queda espacio, lo selecciona
+        if (!item.classList.contains('selected')) {
+          if (selectedCount < MAX_HABITS) {
+            item.classList.add('selected');
+            selectedCount++;
+          } else {
+            alert('Máximo de 5 hábitos alcanzado.');
+          }
+        } else {
+          // Si ya estaba seleccionado, se desmarca
+          item.classList.remove('selected');
+          selectedCount--;
+          delete objectivesMap[item.dataset.habit];
+          delete togglesMap[item.dataset.habit];
+        }
+        refreshUI();
+      });
+    });
+
+    // Evento para anadir habito personalizado
+    document.querySelectorAll('.custom-habit-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const parent = btn.closest('.habit-list');
+        const emojiInput = parent.querySelector('.custom-emoji-input');
+        const input = parent.querySelector('.custom-habit-input');
+        const customEmoji = emojiInput.value.trim() || '⭐';
+        const customName = input.value.trim();
+
+        // Comprobamos si se ha ingresado nombre
+        if (!customName) {
+          alert('Ingresa un nombre para el hábito.');
+          return;
+        }
+        // Verifica no superar el maximo
+        if (selectedCount >= MAX_HABITS) {
+          alert('Máximo de 5 hábitos alcanzado.');
+          return;
+        }
+
+        // Crea un elemento DOM con la clase .habit-item y lo marca como seleccionado
+        const newHabit = document.createElement('div');
+        newHabit.className = 'habit-item selected';
+        newHabit.dataset.habit = customName;
+        // Asigna la misma categoria que el contenedor padre
+        const accordion = btn.closest('.accordion');
+        newHabit.dataset.category = accordion ? accordion.dataset.category : 'otro';
+
+        newHabit.innerHTML = `
+          <div class="habit-label">
+            <span class="habit-icon">${customEmoji}</span>
+            <span>${customName}</span>
+          </div>
+          <button class="plus-btn">+</button>
+        `;
+        selectedCount++;
+
+        // Limpia campos de texto
+        emojiInput.value = '';
+        input.value = '';
+
+        // Anade evento de click para seleccionar/deseleccionar este nuevo item
+        newHabit.addEventListener('click', (ev) => {
+          ev.stopPropagation();
+          if (newHabit.classList.contains('selected')) {
+            newHabit.classList.remove('selected');
+            selectedCount--;
+            delete objectivesMap[newHabit.dataset.habit];
+            delete togglesMap[newHabit.dataset.habit];
+          } else {
+            if (selectedCount < MAX_HABITS) {
+              newHabit.classList.add('selected');
+              selectedCount++;
+            } else {
+              alert('Máximo de 5 hábitos alcanzado.');
+            }
+          }
+          refreshUI();
+        });
+
+        // Inserta el nuevo habito personalizado antes del bloque de creacion
+        parent.insertBefore(newHabit, parent.querySelector('.custom-habit-wrapper'));
+        refreshUI();
+      });
+    });
+
+    // Accion del boton Enviar
+    btnEnviar.addEventListener('click', () => {
+      const nombre = document.getElementById('nombre').value.trim();
+      const edad = document.getElementById('edad').value.trim();
+      const sexo = document.getElementById('sexo').value;
+      const selectedItems = document.querySelectorAll('.habit-item.selected');
+
+      // Se construye la lista de habitos en un array [categoria, habito]
+      const habitos = [];
+      selectedItems.forEach(item => {
+        const cat = item.dataset.category || 'otro';
+        const hab = item.dataset.habit;
+        habitos.push([cat, hab]);
+      });
+
+      // Lista de objetivos: [categoria, habito, textoObjetivo, frecuencia]
+      const objetivos = [];
+      selectedItems.forEach(item => {
+        const habitName = item.dataset.habit;
+        const category = item.dataset.category || 'otro';
+        if (togglesMap[habitName] === true) {
+          const objText = objectivesMap[habitName].text.trim();
+          const freq = objectivesMap[habitName].freq;
+          if (objText !== '') {
+            objetivos.push([category, habitName, objText, freq]);
+          }
+        }
+      });
+
+      // Objeto final con toda la informacion
+      const payload = {
+        nombre,
+        edad,
+        sexo,
+        habitos,
+        objetivos
+      };
+
+      // Si esta disponible la API de Telegram, se envian los datos
+      if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
+        Telegram.WebApp.sendData(JSON.stringify(payload));
+      }
+
+      // Muestra la info en consola y lanza un mensaje
+      console.log('Datos a enviar:', payload);
+      alert('¡Genial, ya estás registrado! Ya puedes empezar a utilizar la app 🤩');
+    });
+
+    // Se refresca la interfaz al cargar
+    refreshUI();
+  </script>
+</body>
+</html>
