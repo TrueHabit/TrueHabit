@@ -928,6 +928,7 @@
       selectedItems.forEach(item => {
         const cat = item.dataset.category || 'otro';
         const hab = item.dataset.habit;
+        const icon = item.dataset.icon || '⭐';
         habitos.push([cat, hab, icon]);
       });
 
@@ -973,14 +974,14 @@
      * @param {string} icon - el emoji o icono que quieres usar (por defecto "⭐")
      */
     function crearHabitItem(category, habitName, icon = "⭐") {
-      // Creamos el contenedor principal
+      // Crea el contenedor principal
       const newHabit = document.createElement('div');
       newHabit.className = 'habit-item';
-      // Data-attributes para categoría y hábito
+      // Asigna data-attributes
       newHabit.dataset.category = category;
       newHabit.dataset.habit = habitName;
+      newHabit.dataset.icon = icon; // (NUEVO) guardamos el icono en dataset
     
-      // Estructura interna (mírala igual que en tus .habit-item estáticos)
       newHabit.innerHTML = `
         <div class="habit-label">
           <span class="habit-icon">${icon}</span>
@@ -989,8 +990,7 @@
         <button class="plus-btn">+</button>
       `;
     
-      // Añadimos el mismo evento que usas en tus items estáticos,
-      // para que se seleccionen/deseleccionen al hacer click
+      // Evento para seleccionar/deseleccionar
       newHabit.addEventListener('click', (ev) => {
         ev.stopPropagation();
         if (!newHabit.classList.contains('selected')) {
@@ -1003,6 +1003,7 @@
         } else {
           newHabit.classList.remove('selected');
           selectedCount--;
+          // Quitar objetivos si lo desmarcas
           delete objectivesMap[newHabit.dataset.habit];
           delete togglesMap[newHabit.dataset.habit];
         }
