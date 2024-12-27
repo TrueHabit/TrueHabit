@@ -928,7 +928,7 @@
       selectedItems.forEach(item => {
         const cat = item.dataset.category || 'otro';
         const hab = item.dataset.habit;
-        habitos.push([cat, hab]);
+        habitos.push([cat, hab, icon]);
       });
 
       // Lista de objetivos: [categoria, habito, textoObjetivo, frecuencia]
@@ -964,62 +964,144 @@
       alert('¡Genial, ya estás registrado! Ya puedes empezar a utilizar la app 🤩');
     });
 
-      function precargarDatosDesdeQuery() {
-    // Obtenemos los parámetros de la URL
-    const params = new URLSearchParams(window.location.search);
-    const dataParam = params.get('data');
-    if (!dataParam) return;  // No hay nada que precargar
-
-    // Parseamos
-    try {
-      const data = JSON.parse(decodeURIComponent(dataParam));
-
-      // 1) Rellenar nombre, edad, sexo
-      if (data.nombre) document.getElementById('nombre').value = data.nombre;
-      if (data.edad)   document.getElementById('edad').value   = data.edad;
-      if (data.sexo)   document.getElementById('sexo').value   = data.sexo;
-
-      // 2) Rellenar hábitos
-      const habitos = data.habitos || [];
-      const objetivos = data.objetivos || [];
-
-      habitos.forEach(([cat, hab]) => {
-        // Buscamos .habit-item con data-category=cat y data-habit=hab
-        const sel = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
-        const item = document.querySelector(sel);
-        if (item && !item.classList.contains('selected')) {
+    //FUNCION PARA RECUPERAR INFORMACION DEL HABITO
+    /**
+     * Crea y devuelve un <div class="habit-item"> 
+     * con la misma estructura que tus hábitos "estáticos".
+     * @param {string} category - categoría del hábito (ej: "Alimentacion" / "deporte" / "otro"...)
+     * @param {string} habitName - nombre del hábito (ej: "Leer un libro", "Tocar el piano")
+     * @param {string} icon - el emoji o icono que quieres usar (por defecto "⭐")
+     */
+    function crearHabitItem(category, habitName, icon = "⭐") {
+      // Creamos el contenedor principal
+      const newHabit = document.createElement('div');
+      newHabit.className = 'habit-item';
+      // Data-attributes para categoría y hábito
+      newHabit.dataset.category = category;
+      newHabit.dataset.habit = habitName;
+    
+      // Estructura interna (mírala igual que en tus .habit-item estáticos)
+      newHabit.innerHTML = `
+        <div class="habit-label">
+          <span class="habit-icon">${icon}</span>
+          <span>${habitName}</span>
+        </div>
+        <button class="plus-btn">+</button>
+      `;
+    
+      // Añadimos el mismo evento que usas en tus items estáticos,
+      // para que se seleccionen/deseleccionen al hacer click
+      newHabit.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        if (!newHabit.classList.contains('selected')) {
           if (selectedCount < MAX_HABITS) {
-            item.classList.add('selected');
+            newHabit.classList.add('selected');
             selectedCount++;
+          } else {
+            alert('Máximo de 5 hábitos alcanzado.');
           }
-        } else if (!item) {
-          // Si quieres, podrías crear un “custom habit” automáticamente
+        } else {
+          newHabit.classList.remove('selected');
+          selectedCount--;
+          delete objectivesMap[newHabit.dataset.habit];
+          delete togglesMap[newHabit.dataset.habit];
         }
+        refreshUI();
       });
-
-      // 3) Rellenar los objetivos
-      objetivos.forEach(([cat, hab, objText, freq]) => {
-        togglesMap[hab] = true;
-        objectivesMap[hab] = { text: objText, freq: freq || 'semanal' };
-
-        // Asegurarnos de que estén seleccionados
-        const sel = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
-        const item = document.querySelector(sel);
-        if (item && !item.classList.contains('selected')) {
-          if (selectedCount < MAX_HABITS) {
-            item.classList.add('selected');
-            selectedCount++;
-          }
-        }
-      });
-
-    } catch (err) {
-      console.error("Error parseando 'data' de la URL:", err);
+    
+      return newHabit;
     }
 
-    // Refrescamos la UI para que se muestre en pantalla
-    refreshUI();
-  }
+    
+
+    function precargarDatosDesdeQuery() {
+      const params = new URLSearchParams(window.location.search);
+      const dataParam = params.get('data');
+      if (!dataParam) return;
+    
+      try {
+        const data = JSON.parse(decodeURIComponent(dataParam));
+        // 1) Rellenar nombre, edad, sexo
+        if (data.nombre) document.getElementById('nombre').value = data.nombre;
+        if (data.edad)   document.getElementById('edad').value   = data.edad;
+        if (data.sexo)   document.getElementById('sexo').value   = data.sexo;
+    
+        // 2) HÁBITOS
+        //    Suponiendo que en tu bot has construido algo como:
+        //    habitos_list.append([cat, hab, icon])  (icon opcional)
+        const habitos = data.habitos || [];
+        habitos.forEach(([cat, hab, icon]) => {
+          // Buscamos si ya existe en el HTML
+          let selector = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
+          let item = document.querySelector(selector);
+    
+          // Si NO existe, lo creamos dinámicamente:
+          if (!item) {
+            // Buscamos el <div class="accordion" data-category="cat">
+            let accordion = document.querySelector(`.accordion[data-category="${cat}"]`);
+            // Si no encuentras un acordeón con esa categoría, usa "otro" o uno genérico
+            if (!accordion) {
+              console.warn("No existe acordeón con data-category=", cat, "usamos 'otro'");
+              accordion = document.querySelector(`.accordion[data-category="otro"]`);
+            }
+            const habitList = accordion.querySelector('.habit-list');
+            if (!habitList) {
+              console.error("No se encontró .habit-list dentro de la categoría", cat);
+              return; // Evitas que crashee
+            }
+    
+            // Crea el item
+            item = crearHabitItem(cat, hab, icon);
+            // Añádelo a la .habit-list
+            habitList.appendChild(item);
+          }
+    
+          // Marcamos el item como "selected" (si no lo está ya)
+          if (!item.classList.contains('selected')) {
+            if (selectedCount < MAX_HABITS) {
+              item.classList.add('selected');
+              selectedCount++;
+            }
+          }
+        });
+    
+        // 3) OBJETIVOS
+        //    Si tu JSON viene con: objetivos_list.append([cat, hab, objText, freq, icon?])
+        const objetivos = data.objetivos || [];
+        objetivos.forEach(([cat, hab, objText, freq]) => {
+          // Asegurarte de que existe el .habit-item
+          let sel = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
+          let item = document.querySelector(sel);
+          // Si no existe, lo creas con un icono por defecto (si no lo guardas en DB)
+          if (!item) {
+            let accordion = document.querySelector(`.accordion[data-category="${cat}"]`)
+              || document.querySelector(`.accordion[data-category="otro"]`);
+            let habitList = accordion.querySelector('.habit-list');
+            item = crearHabitItem(cat, hab, "⭐");
+            habitList.appendChild(item);
+    
+            // Marcamos como seleccionado
+            if (!item.classList.contains('selected') && selectedCount < MAX_HABITS) {
+              item.classList.add('selected');
+              selectedCount++;
+            }
+          }
+    
+          // Indicar que tiene objetivo (toggle)
+          togglesMap[hab] = true;
+          objectivesMap[hab] = {
+            text: objText,
+            freq: freq || "semanal"
+          };
+        });
+    
+      } catch (error) {
+        console.error("Error parseando 'data' de la URL:", error);
+      }
+    
+      // Refresca la UI para mostrar los cambios
+      refreshUI();
+    }
 
   // Llamas a la precarga al final (o en DOMContentLoaded)
   window.addEventListener('DOMContentLoaded', () => {
