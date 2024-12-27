@@ -963,8 +963,69 @@
       alert('¡Genial, ya estás registrado! Ya puedes empezar a utilizar la app 🤩');
     });
 
-    // Se refresca la interfaz al cargar
+      function precargarDatosDesdeQuery() {
+    // Obtenemos los parámetros de la URL
+    const params = new URLSearchParams(window.location.search);
+    const dataParam = params.get('data');
+    if (!dataParam) return;  // No hay nada que precargar
+
+    // Parseamos
+    try {
+      const data = JSON.parse(decodeURIComponent(dataParam));
+
+      // 1) Rellenar nombre, edad, sexo
+      if (data.nombre) document.getElementById('nombre').value = data.nombre;
+      if (data.edad)   document.getElementById('edad').value   = data.edad;
+      if (data.sexo)   document.getElementById('sexo').value   = data.sexo;
+
+      // 2) Rellenar hábitos
+      const habitos = data.habitos || [];
+      const objetivos = data.objetivos || [];
+
+      habitos.forEach(([cat, hab]) => {
+        // Buscamos .habit-item con data-category=cat y data-habit=hab
+        const sel = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
+        const item = document.querySelector(sel);
+        if (item && !item.classList.contains('selected')) {
+          if (selectedCount < MAX_HABITS) {
+            item.classList.add('selected');
+            selectedCount++;
+          }
+        } else if (!item) {
+          // Si quieres, podrías crear un “custom habit” automáticamente
+        }
+      });
+
+      // 3) Rellenar los objetivos
+      objetivos.forEach(([cat, hab, objText, freq]) => {
+        togglesMap[hab] = true;
+        objectivesMap[hab] = { text: objText, freq: freq || 'semanal' };
+
+        // Asegurarnos de que estén seleccionados
+        const sel = `.habit-item[data-category="${cat}"][data-habit="${hab}"]`;
+        const item = document.querySelector(sel);
+        if (item && !item.classList.contains('selected')) {
+          if (selectedCount < MAX_HABITS) {
+            item.classList.add('selected');
+            selectedCount++;
+          }
+        }
+      });
+
+    } catch (err) {
+      console.error("Error parseando 'data' de la URL:", err);
+    }
+
+    // Refrescamos la UI para que se muestre en pantalla
     refreshUI();
+  }
+
+  // Llamas a la precarga al final (o en DOMContentLoaded)
+  window.addEventListener('DOMContentLoaded', () => {
+    refreshUI();                // Ya lo tenías
+    precargarDatosDesdeQuery(); // NUEVO: precargamos
+  });
+    
   </script>
 </body>
 </html>
