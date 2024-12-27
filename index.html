@@ -633,6 +633,13 @@
       // Asigna la categoria a cada item de habito
       accordion.querySelectorAll('.habit-item').forEach(item => {
         item.dataset.category = accordion.dataset.category || 'otro';
+
+        const iconSpan = item.querySelector('.habit-icon');
+        if (iconSpan) {
+          item.dataset.icon = iconSpan.textContent.trim();
+        } else {
+          item.dataset.icon = '⭐'; // Valor por defecto si no hay icono
+        }
       });
 
       // Al hacer click en el encabezado, cierra todos y abre solo el clicado
@@ -871,44 +878,17 @@
         }
 
         // Crea un elemento DOM con la clase .habit-item y lo marca como seleccionado
-        const newHabit = document.createElement('div');
-        newHabit.className = 'habit-item selected';
-        newHabit.dataset.habit = customName;
-        // Asigna la misma categoria que el contenedor padre
-        const accordion = btn.closest('.accordion');
-        newHabit.dataset.category = accordion ? accordion.dataset.category : 'otro';
-
-        newHabit.innerHTML = `
-          <div class="habit-label">
-            <span class="habit-icon">${customEmoji}</span>
-            <span>${customName}</span>
-          </div>
-          <button class="plus-btn">+</button>
-        `;
+        const newHabit = crearHabitItem(
+          parent.closest('.accordion').dataset.category || 'otro',
+          customName,
+          customEmoji // (NUEVO) Pasar el icono al crear el hábito
+        );
+        newHabit.classList.add('selected');
         selectedCount++;
 
         // Limpia campos de texto
         emojiInput.value = '';
         input.value = '';
-
-        // Anade evento de click para seleccionar/deseleccionar este nuevo item
-        newHabit.addEventListener('click', (ev) => {
-          ev.stopPropagation();
-          if (newHabit.classList.contains('selected')) {
-            newHabit.classList.remove('selected');
-            selectedCount--;
-            delete objectivesMap[newHabit.dataset.habit];
-            delete togglesMap[newHabit.dataset.habit];
-          } else {
-            if (selectedCount < MAX_HABITS) {
-              newHabit.classList.add('selected');
-              selectedCount++;
-            } else {
-              alert('Máximo de 5 hábitos alcanzado.');
-            }
-          }
-          refreshUI();
-        });
 
         // Inserta el nuevo habito personalizado antes del bloque de creacion
         parent.insertBefore(newHabit, parent.querySelector('.custom-habit-wrapper'));
@@ -980,7 +960,7 @@
       // Asigna data-attributes
       newHabit.dataset.category = category;
       newHabit.dataset.habit = habitName;
-      newHabit.dataset.icon = icon; // (NUEVO) guardamos el icono en dataset
+      newHabit.dataset.icon = icon; 
     
       newHabit.innerHTML = `
         <div class="habit-label">
