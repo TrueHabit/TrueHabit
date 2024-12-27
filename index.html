@@ -1033,8 +1033,13 @@
     
             // Crea el item
             item = crearHabitItem(cat, hab, icon);
-            // Añádelo a la .habit-list
-            habitList.appendChild(item);
+            // Inserta el nuevo habit-item antes del custom-habit-wrapper
+            const customHabitWrapper = habitList.querySelector('.custom-habit-wrapper');
+            if (customHabitWrapper) {
+              habitList.insertBefore(item, customHabitWrapper);
+            } else {
+              habitList.appendChild(item); // Fallback si no existe custom-habit-wrapper
+            }
           }
     
           // Marcamos el item como "selected" (si no lo está ya)
