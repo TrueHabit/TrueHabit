@@ -729,6 +729,7 @@
           const inputObj = document.createElement('input');
           inputObj.type = 'text';
           inputObj.className = 'objetivo-input';
+          inputObj.placeholder = "p.ej.: 3 veces al día // Menos de 5 veces";
           inputObj.value = objectivesMap[habitName].text;
           inputObj.addEventListener('input', () => {
             objectivesMap[habitName].text = inputObj.value;
