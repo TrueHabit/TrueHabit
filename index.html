@@ -1,23 +1,16 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <!-- Define la codificación de caracteres para mostrar símbolos correctamente -->
   <meta charset="UTF-8">
-
-  <!-- Ajusta la vista en dispositivos móviles con anchura y altura concretas, sin zoom -->
   <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0, user-scalable=no">
-
-  <!-- Título de la página que aparece en la pestaña del navegador -->
   <title>¡Despega tus Hábitos!</title>
-
-  <!-- Script para integración con Telegram WebApp -->
   <script src="https://telegram.org/js/telegram-web-app.js"></script>
 
   <style>
     /* 
       Estilos globales:
-      - Se quitan márgenes y rellenos por defecto
-      - Se fija la caja de dimensión según border-box
+      - Reset de margin/padding
+      - box-sizing: border-box
     */
     * {
       box-sizing: border-box;
@@ -26,29 +19,24 @@
     }
 
     /* 
-      Html y body ocupan la altura completa, 
-      fondo blanco (#fff)
+      Fondo principal #ebf9f7
     */
     html, body {
       height: 100%;
       min-height: 100vh;
-      background-color: #fff; /* Vuelve a blanco */
+      background-color: #ebf9f7;
       font-family: sans-serif;
       -webkit-overflow-scrolling: touch;
     }
 
     /* 
-      Body en modo flex para ajustar su contenido principal
+      Body en modo flex para que main ocupe el espacio restante
     */
     body {
       display: flex;
       flex-direction: column;
     }
 
-    /* 
-      main crece para ocupar el espacio sobrante 
-      y se añade un padding-bottom grande para scroll en móviles
-    */
     main {
       flex: 1;
       padding: 16px;
@@ -57,20 +45,23 @@
     }
 
     /* 
-      Títulos principales
+      Título principal
     */
     h1 {
       text-align: center;
       font-size: 1.8rem;
       margin-bottom: 0.5rem;
-      color: #f06292;
+      color: #0A4A45;
       text-shadow: 1px 1px 2px rgba(0,0,0,0.2);
     }
+
     .subtitle-cohete {
       text-align: center;
       font-size: 3rem;
       margin-bottom: 1rem;
+      color: #0A4A45;
     }
+
     .cohete-logo {
       max-width: 180px;
       display: block;
@@ -78,7 +69,7 @@
     }
 
     /* 
-      input-group para nombre, edad, etc.
+      Inputs (nombre, edad, etc.)
     */
     .input-group {
       margin-bottom: 15px;
@@ -87,67 +78,87 @@
       display: block;
       margin-bottom: 5px;
       font-weight: 600;
+      color: #0A4A45;
     }
     .input-group input {
       width: 100%;
       padding: 10px;
-      border: 1px solid #eee;
+      border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
     }
 
     /* 
-      Sección donde se muestran los hábitos seleccionados
+      Selector de sexo (fondo claro, texto verde oscuro)
     */
-    #habitosSeleccionadosContainer {
-      background-color: #fff;
-      border: 1px solid #eee;
-      border-radius: 8px;
-      padding: 15px;
-      margin-bottom: 20px;
-    }
-    #selectedHabitsList {
+    #sexo {
+      padding: 5px 8px;
       font-size: 0.9rem;
-      color: #666;
-      min-height: 20px;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+      color: #0A4A45;
+      width: 100%;
+      max-width: 200px;
     }
 
     /* 
-      Acordeón con bordes rosas y fondo blanco
+      Contenedor de hábitos registrados (sin verde oscuro)
+      Fondo blanco y borde claro
+    */
+    #habitosSeleccionadosContainer {
+      background-color: #ebf9f7;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      padding: 15px;
+      margin-bottom: 20px;
+      color: #0A4A45;
+    }
+    #selectedHabitsList {
+      font-size: 0.9rem;
+    }
+
+    /* 
+      Acordeón
+      - Borde 2px #0A4A45
+      - Fondo del contenedor en #0A4A45
+      - Header en #0A4A45 con texto blanco
+      - Contenido desplegado en #ebf9f7
     */
     .accordion {
-      border: 2px solid #f06292;
+      border: 2px solid #0A4A45;
       border-radius: 8px;
       margin-bottom: 10px;
       overflow: hidden;
-      background-color: #fff;
+      background-color: #0A4A45;
     }
     .accordion-header {
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 15px;
-      background-color: #fafafa;
+      background-color: #0A4A45;
+      color: #fff;
       cursor: pointer;
     }
     .accordion-header h3 {
       margin: 0;
       font-size: 1rem;
       font-weight: 600;
-      color: #f06292;
     }
     .accordion-content {
       max-height: 0;
       overflow: hidden;
       transition: max-height 0.3s ease;
+      background-color: #ebf9f7; /* Fondo claro */
+      color: #0A4A45;
     }
     .accordion-content.open {
       padding: 15px;
-      border-top: 1px solid #eee;
+      border-top: 1px solid #0A4A45;
     }
 
     /* 
-      Contenedor de hábitos 
+      Listado de hábitos
     */
     .habit-list {
       display: grid;
@@ -159,18 +170,20 @@
       align-items: center;
       justify-content: space-between;
       padding: 10px;
-      border: 1px solid #eee;
+      border: 1px solid #0A4A45;
       border-radius: 8px;
       cursor: pointer;
+      background-color: #ebf9f7;
+      color: #0A4A45;
       transition: background-color 0.2s;
-      background-color: #fff;
     }
     .habit-item:hover {
-      background-color: #fdfdfd;
+      background-color: #ebf9f7;
     }
     .habit-item.selected {
-      border-color: #ff9090;
-      background-color: #ffecee;
+      border-color: #0A4A45;
+      background-color: #0A4A45;
+      color: #fff;
     }
     .habit-label {
       display: flex;
@@ -185,12 +198,12 @@
       background-color: transparent;
       border: none;
       font-size: 1.2rem;
-      color: #f06292;
+      color: #0A4A45;
       cursor: pointer;
     }
 
     /* 
-      Para añadir un hábito personalizado
+      Añadir hábito personalizado
     */
     .custom-habit-wrapper {
       display: flex;
@@ -199,27 +212,29 @@
       align-items: center;
       padding: 10px;
       margin-top: 10px;
-      border-top: 1px dashed #ddd;
+      border-top: 1px dashed #0A4A45;
       grid-column: 1 / -1;
     }
     .custom-emoji-input {
       width: 60px;
       text-align: center;
-      border: 1px solid #eee;
+      border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
       padding: 8px;
+      color: #0A4A45;
     }
     .custom-habit-input {
       flex: 1;
       min-width: 0;
       padding: 8px;
-      border: 1px solid #eee;
+      border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 1rem;
+      color: #0A4A45;
     }
     .custom-habit-btn {
-      background-color: #f06292;
+      background-color: #0A4A45;
       color: #fff;
       border: none;
       border-radius: 6px;
@@ -228,23 +243,23 @@
       font-size: 0.9rem;
     }
     .custom-habit-btn:hover {
-      background-color: #ec407a;
+      background-color: #083f3b;
     }
 
     /* 
-      Sección de Objetivos 
+      Sección de Objetivos en verde claro (#ebf9f7)
     */
     #objetivosContainer {
-      background-color: #fff;
-      border: 1px solid #eee;
+      background-color: #ebf9f7;
+      border: 1px solid #0A4A45;
       border-radius: 8px;
       padding: 15px;
       margin-top: 20px;
       margin-bottom: 20px;
+      color: #0A4A45;
     }
     #objetivosList {
       font-size: 0.9rem;
-      color: #333;
     }
     .objetivo-row {
       margin-bottom: 15px;
@@ -266,23 +281,29 @@
       flex: 1;
       min-width: 0;
       padding: 8px;
-      border: 1px solid #eee;
+      border: 1px solid #ccc;
       border-radius: 6px;
       font-size: 0.9rem;
+      color: #0A4A45;
     }
     .frequency-row {
       margin-left: 30px;
       margin-top: 5px;
     }
-    .frequency-select {
+    .frequency-select-objetivo {
+      background-color: #0A4A45;
+      color: #fff;
+      border: none;
+      border-radius: 6px;
       padding: 5px 8px;
       font-size: 0.9rem;
-      border-radius: 6px;
-      border: 1px solid #eee;
+      cursor: pointer;
     }
 
     /* 
       Botón de envío
+      - #ccc cuando está deshabilitado
+      - #0A4A45 cuando está habilitado
     */
     .send-button {
       background-color: #ccc;
@@ -297,11 +318,11 @@
       transition: background-color 0.2s;
     }
     .send-button.enabled {
-      background-color: #f06292;
+      background-color: #0A4A45;
       cursor: pointer;
     }
     .send-button.enabled:hover {
-      background-color: #ec407a;
+      background-color: #083f3b;
     }
 
     /*
@@ -338,7 +359,8 @@
     }
 
     /* ======================================
-       MODAL para mensaje de bienvenida
+       MODAL de bienvenida
+       Fondo claro
        ====================================== */
     .modal-overlay {
       position: fixed;
@@ -351,11 +373,11 @@
       display: flex;
       justify-content: center;
       align-items: center;
-      /* Por defecto oculto */
-      display: none;
+      display: none; /* por defecto oculto */
     }
     .modal-content {
-      background: #fff;
+      background: #ebf9f7; /* Fondo claro */
+      color: #0A4A45;      /* Texto verde oscuro */
       border-radius: 8px;
       padding: 20px;
       max-width: 350px;
@@ -368,7 +390,7 @@
     }
     .close-modal-btn {
       margin-top: 1rem;
-      background: #f06292;
+      background: #0A4A45;
       color: #fff;
       border: none;
       border-radius: 6px;
@@ -377,7 +399,7 @@
       font-size: 0.9rem;
     }
     .close-modal-btn:hover {
-      background-color: #ec407a;
+      background-color: #083f3b;
     }
   </style>
 </head>
@@ -390,7 +412,7 @@
 
     <!-- Logo principal -->
     <div class="subtitle-cohete">
-        <img src="truehabits-logo_TRS.png" alt="TrueHabits Logo" class="cohete-logo">
+      <img src="truehabits-logo_TRS.png" alt="TrueHabits Logo" class="cohete-logo">
     </div> 
 
     <!-- Campo Nombre -->
@@ -407,7 +429,7 @@
     <!-- Campo Sexo -->
     <div class="input-group">
       <label for="sexo">Sexo *</label>
-      <select id="sexo" class="frequency-select">
+      <select id="sexo">
         <option value="no_especificado" selected>Prefiero no decirlo</option>
         <option value="masculino">Masculino</option>
         <option value="femenino">Femenino</option>
@@ -415,7 +437,7 @@
     </div>
 
     <!-- Lista de hábitos seleccionados -->
-    <h2>Hábitos registrados *</h2>
+    <h2 style="color:#0A4A45;">Hábitos registrados *</h2>
     <div id="habitosSeleccionadosContainer">
       <div id="selectedHabitsList">(¡Seleccione algún Hábito!)</div>
     </div>
@@ -611,9 +633,9 @@
       </div>
     </div>
 
-    <!-- Sección de Objetivos -->
-    <div id="objetivosContainer">
-      <h2>Objetivos</h2>
+    <!-- Sección de Objetivos en verde claro -->
+    <div id="objetivosContainer" style="display: none;">
+      <h2 style="margin-bottom: 10px;">Objetivos</h2>
       <div id="objetivosList"></div>
     </div>
 
@@ -627,11 +649,7 @@
   <!-- MODAL overlay: mensaje de bienvenida -->
   <div class="modal-overlay" id="welcomeModal">
     <div class="modal-content">
-
-        <!-- Logodel mensaje -->
       <img src="truehabits-logo_TRS.png" alt="TrueHabits Logo">
-
-      <!-- Mensaje llamativo con emojis -->
       <p style="white-space: pre-line;">
         ¡Hola, bienvenido al formulario de registro! 🙌 
         Queremos ayudarte a cumplir con tus objetivos, 
@@ -642,8 +660,6 @@
 
         Recuerda: lo importante es la constancia. 🔥
       </p>
-      
-      <!-- Botón para cerrar -->
       <button class="close-modal-btn" id="closeModalBtn">Aceptar</button>
     </div>
   </div>
@@ -656,7 +672,7 @@
       const header = accordion.querySelector('.accordion-header');
       const content = accordion.querySelector('.accordion-content');
 
-      // Asigna la categoría a cada .habit-item
+      // Asigna la categoría e icono a cada .habit-item
       accordion.querySelectorAll('.habit-item').forEach(item => {
         item.dataset.category = accordion.dataset.category || 'otro';
         const iconSpan = item.querySelector('.habit-icon');
@@ -667,13 +683,15 @@
         }
       });
 
-      // Al hacer click en el encabezado, cierra todos y abre solo el clicado
+      // Al hacer click en el encabezado, se cierra/abre acordeón
       header.addEventListener('click', () => {
         const isOpen = content.classList.contains('open');
+        // Cerrar todos
         document.querySelectorAll('.accordion-content').forEach(ac => {
           ac.classList.remove('open');
           ac.style.maxHeight = null;
         });
+        // Abrir si no estaba abierto
         if (!isOpen) {
           content.classList.add('open');
           content.style.maxHeight = content.scrollHeight + 'px';
@@ -684,18 +702,16 @@
     // ===============================================
     // Lógica de hábitos
     // ===============================================
-    const MAX_HABITS = 6;
+    const MAX_HABITS = 6;  // Máximo de hábitos
     let selectedCount = 0;
     const objectivesMap = {};
 
-    // Elementos del DOM
     const selectedHabitsList = document.getElementById('selectedHabitsList');
     const objetivosContainer = document.getElementById('objetivosContainer');
     const objetivosList = document.getElementById('objetivosList');
     const btnEnviar = document.getElementById('btnEnviar');
     const errorMessages = document.getElementById('errorMessages');
 
-    // Refrescar la UI
     function refreshUI() {
       updateSelectedHabitsDisplay();
       updateObjectivesDisplay();
@@ -716,7 +732,7 @@
       }
     }
 
-    // Objetivos: siempre uno por hábito
+    // Manejo de objetivos para cada hábito
     function updateObjectivesDisplay() {
       const selectedItems = document.querySelectorAll('.habit-item.selected');
       objetivosList.innerHTML = '';
@@ -756,11 +772,11 @@
 
         row.appendChild(contentDiv);
 
-        // Frecuencia
+        // Frecuencia (en verde oscuro)
         const freqDiv = document.createElement('div');
         freqDiv.className = 'frequency-row';
         const freqSelect = document.createElement('select');
-        freqSelect.className = 'frequency-select';
+        freqSelect.className = 'frequency-select-objetivo';  // Clase para ponerlo en verde oscuro
         freqSelect.innerHTML = `
           <option value="diaria">Diaria</option>
           <option value="semanal">Semanal</option>
@@ -794,7 +810,7 @@
         errors.push('- Falta al menos un hábito');
       }
 
-      // Revisar que cada hábito tenga un objetivo no vacío
+      // Revisar que cada hábito tenga un objetivo
       selectedItems.forEach(item => {
         const habitName = item.dataset.habit;
         const objText = objectivesMap[habitName].text.trim();
@@ -806,19 +822,17 @@
       if (errors.length === 0) {
         btnEnviar.classList.add('enabled');
         btnEnviar.removeAttribute('disabled');
-        btnEnviar.style.backgroundColor = '#f06292';
         btnEnviar.style.cursor = 'pointer';
       } else {
         btnEnviar.classList.remove('enabled');
         btnEnviar.setAttribute('disabled', true);
-        btnEnviar.style.backgroundColor = '#ccc';
         btnEnviar.style.cursor = 'not-allowed';
       }
 
       errorMessages.innerHTML = errors.length > 0 ? errors.join('<br>') : '';
     }
 
-    // Evento para seleccionar/deseleccionar un hábito
+    // Seleccionar/deseleccionar hábito
     document.querySelectorAll('.habit-item').forEach(item => {
       item.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -838,7 +852,7 @@
       });
     });
 
-    // Evento para añadir hábito personalizado
+    // Añadir hábito personalizado
     document.querySelectorAll('.custom-habit-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
@@ -857,7 +871,7 @@
           return;
         }
 
-        // Crear habit-item
+        // Crear nuevo habit-item
         const newHabit = crearHabitItem(
           parent.closest('.accordion').dataset.category || 'otro',
           customName,
@@ -874,7 +888,6 @@
       });
     });
 
-    // Función para crear habit-item dinámico
     function crearHabitItem(category, habitName, icon = "⭐") {
       const newHabit = document.createElement('div');
       newHabit.className = 'habit-item';
@@ -937,7 +950,6 @@
         }
       });
 
-      // Construir payload
       const payload = {
         nombre,
         edad,
@@ -946,7 +958,7 @@
         objetivos
       };
 
-      // Enviar vía Telegram si está disponible
+      // Enviar vía Telegram WebApp si aplica
       if (typeof Telegram !== 'undefined' && Telegram.WebApp) {
         Telegram.WebApp.sendData(JSON.stringify(payload));
       }
@@ -955,18 +967,17 @@
       alert('¡Genial, ya estás registrado! Ya puedes empezar a utilizar la app 🤩');
     });
 
-    // Muestra el modal de bienvenida
+    // Modal de bienvenida
     function mostrarWelcomeModal() {
       const modal = document.getElementById('welcomeModal');
       modal.style.display = 'flex';
     }
-    // Oculta el modal
     function ocultarWelcomeModal() {
       const modal = document.getElementById('welcomeModal');
       modal.style.display = 'none';
     }
 
-    // Precarga datos desde query
+    // Precargar datos desde query
     function precargarDatosDesdeQuery() {
       const params = new URLSearchParams(window.location.search);
       const dataParam = params.get('data');
@@ -974,7 +985,7 @@
 
       try {
         const data = JSON.parse(decodeURIComponent(dataParam));
-        // Rellenar nombre, edad, sexo
+        // Rellenar campos
         if (data.nombre) document.getElementById('nombre').value = data.nombre;
         if (data.edad)   document.getElementById('edad').value   = data.edad;
         if (data.sexo)   document.getElementById('sexo').value   = data.sexo;
@@ -1033,12 +1044,10 @@
       refreshUI();
     }
 
-    // Al cargar la página
+    // Al cargar
     window.addEventListener('DOMContentLoaded', () => {
-      // Mostrar el modal de bienvenida
+      // Mostrar modal de bienvenida
       mostrarWelcomeModal();
-
-      // Botón para cerrar el modal
       document.getElementById('closeModalBtn').addEventListener('click', ocultarWelcomeModal);
 
       refreshUI();
