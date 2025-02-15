@@ -747,7 +747,7 @@
       selectedItems.forEach(item => {
         const habitName = item.dataset.habit;
         if (!objectivesMap[habitName]) {
-          objectivesMap[habitName] = { text: '', freq: 'semanal' };
+          objectivesMap[habitName] = { text: '', freq: 'diaria' };
         }
 
         const row = document.createElement('div');
@@ -1035,7 +1035,7 @@
           }
           objectivesMap[hab] = {
             text: objText,
-            freq: freq || 'semanal'
+            freq: freq || 'diaria'
           };
         });
 
